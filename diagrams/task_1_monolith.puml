@@ -1,0 +1,28 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+LAYOUT_WITH_LEGEND()
+
+title Системная диаграмма приложения "Теплый Дом"
+
+System_Ext(hvac, "Система отопления", "Система отопления дома")
+Person_Ext(customer, "Пользователь", "Клиент компании с возможностью удаленного управления температурой в своем доме")
+Person(employee, "Сотрудник", "Сотрудник компании. Подключает новые системы отопления")
+
+Enterprise_Boundary(b, "Теплый Дом", "Компания 'Теплый Дом'") {
+    System(monolith, "Монолитное приложение 'Теплый дом'", "Позволяет пользователям получать информацию о текущей температуре в доме и устанавливать требуемую")
+
+    ContainerDb(db, "Database", "PostgreSQL", "Хранит текущее состояние сенсоров и систем отопления")
+    Person(customer_service, "Отдел поддержки", "Имеет административный доступ к ресурсам системы")
+}
+
+Rel_D(customer, monolith, "Посылает команды управления температурой")
+
+Rel_D(hvac, monolith, "Посылает статус")
+Rel_U(monolith, hvac, "Посылает управляющие сигналы")
+
+Rel_D(employee, customer_service, "Регистрирует новую систему")
+
+Rel_D(customer_service, db, "Создает новые записи")
+Rel_D(monolith, db, "Обновляет существующие записи")
+@enduml

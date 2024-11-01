@@ -1,0 +1,36 @@
+@startuml
+
+participant "Клиент" as Customer
+participant "HeatingSystemController " as Controller
+participant "HeatingSystemService" as Service
+participant "HeatingSystemServiceImpl" as Implementation
+participant "HeatingSystemRepository" as Repository
+participant "HeatingSystem" as HeatingSystem
+participant "HeatingSystemDto" as DTO
+
+'1. Клиент отправляет команту системе
+Customer -> Controller : HTTP Request
+
+'2. Контроллер транслирует HTTP команду в соответствующий вызов сервиса
+Controller -> Service : Управляющий вызов
+
+'3. Сервис - это просто интерфейс. Поэтому переадресуется конкретному классу
+Service -> Implementation : Переадресация вызова
+
+'4. С помощью репозитория находим запись в БД и делаем нужные изменения
+Implementation -> Repository: Поиск записи
+Repository -> HeatingSystem: Поиск записи
+HeatingSystem -> Repository: Запись устройства как объект
+Repository -> Implementation: Объект устройства
+Implementation -> Repository: Сохранение изменений
+
+'5. Сохранение изменений
+Repository -> HeatingSystem: Сохранение изменений
+
+'6. Преобразование новой записи в формат для транспортировки (если необходимо изначальной команде)
+HeatingSystem --> DTO: Конвертация объекта в DTO
+DTO --> Implementation: Данные после выполнения команды
+Implementation -> Controller: Возврат результата
+Controller -> Customer: HTTP Response
+
+@enduml

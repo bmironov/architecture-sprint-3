@@ -1,0 +1,45 @@
+@startuml
+title Heating systems management application - C4 - Class Diagram
+
+class HeatingSystem {
+  + Long id <<PK>>
+  + boolean isOn
+  + double targetTemperature
+  + double currentTemperature
+}
+
+class TemperatureSensor {
+  + Long id <<PK>>
+  + double currentTemperature
+  + LocalDateTime lastUpdated
+}
+
+class HeatingSystemDto {
+  + Long id
+  + boolean isOn
+  + double targetTemperature
+  + double currentTemperature
+}
+
+class HeatingSystemService {
+  + getHeatingSystem(Long id)
+  + updateHeatingSystem(Long id, HeatingSystemDto heatingSystemDto)
+  + turnOn(Long id)
+  + turnOff(Long id)
+  + setTargetTemperature(Long id, double temperature)
+  + getCurrentTemperature(Long id)
+}
+
+class HeatingSystemController {
+  + HeatingSystemService heatingSystemService
+  + Logger logger
+  + getHeatingSystem(@PathVariable("id") Long id)
+  + updateHeatingSystem(@PathVariable("id") Long id,
+                        @RequestBody HeatingSystemDto heatingSystemDto)
+  + turnOn(@PathVariable("id") Long id)
+  + turnOff(@PathVariable("id") Long id)
+  + setTargetTemperature(@PathVariable("id") Long id,
+                         @RequestParam double temperature)
+  + getCurrentTemperature(@PathVariable("id") Long id)
+}
+@enduml

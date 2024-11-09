@@ -1,0 +1,607 @@
+openapi: 3.0.3
+info:
+  title: Warm Home - OpenAPI 3.0
+  description: |-
+    This is an example of proposed API for new set of microsrvices designed
+    in Sprint #3.
+  version: 1.1.0
+servers:
+  - url: https://warm_home.ru/api/v1
+tags:
+  - name: users
+    description: User account-related operations
+  - name: hvacs
+    description: Heating / Ventilation / A/C (HVAC) devices related operations
+  - name: lights
+    description: Lighting devices related operations
+paths:
+  /users:
+    post:
+      tags:
+        - users
+      summary: Create new user
+      description: This can only be done by the logged in user. ID in requestBody is ignored
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid username/password supplied
+        '422':
+          description: Validation exception
+  /users/login:
+    get:
+      tags:
+        - users
+      summary: Logs user into the system
+      description: ''
+      operationId: loginUser
+      parameters:
+        - name: username
+          in: query
+          description: The user name for login
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: Hash of the password for login (client app converts user plain text input into hash and sends it over the internet to us)
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid username/password supplied
+  /users/logout:
+    get:
+      tags:
+        - users
+      summary: Logs out current logged in user session
+      description: ''
+      operationId: logoutUser
+      parameters: []
+      responses:
+        '200':
+          description: successful operation
+  /users/{userID}:
+    get:
+      tags:
+        - users
+      summary: Get user by user name
+      description: Can be executed by admin user only
+      operationId: getUserById
+      parameters:
+        - name: userID
+          in: path
+          description: The ID of user that needs to be fetched
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'          
+        '400':
+          description: Invalid userID supplied
+        '404':
+          description: User not found
+    put:
+      tags:
+        - users
+      summary: Update user
+      description: This can only be done by the logged in user
+      operationId: updateUser
+      parameters:
+        - name: userID
+          in: path
+          description: ID of user that needs to be updated
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Update an existent user in the Customer DB
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid userID supplied
+        '422':
+          description: Validation exception
+    delete:
+      tags:
+        - users
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      parameters:
+        - name: userID
+          in: path
+          description: The ID of user that needs to be deleted
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid userID supplied
+        '404':
+          description: User not found
+  /hvacs:
+    put:
+      tags:
+        - hvacs
+      summary: Update info about existing HVAC system
+      description: Update a record of HVAC system by its ID
+      operationId: updateHVAC
+      requestBody:
+        description: Update an existent HVAC record
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HVAC'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HVAC'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HVAC'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: HVAC system not found
+        '422':
+          description: Validation exception
+    post:
+      tags:
+        - hvacs
+      summary: Add a new HVAC system to the service
+      description: Add a new HVAC system to the service
+      operationId: addHVAC
+      requestBody:
+        description: Create a new HVAC system under service
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HVAC'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HVAC'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HVAC'          
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+  /hvacs/{hvacID}:
+    get:
+      tags:
+        - hvacs
+      summary: Find HVAC by ID
+      description: Returns a single HVAC
+      operationId: getHVACbyId
+      parameters:
+        - name: hvacID
+          in: path
+          description: ID of HVAC to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HVAC'          
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: HVAC system not found
+    delete:
+      tags:
+        - hvacs
+      summary: Deletes a HVAC system
+      description: Deletes a HVAC system
+      operationId: deleteHvac
+      parameters:
+        - name: hvacID
+          in: path
+          description: HVAC system ID to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid HVAC ID value
+        '404':
+          description: HVAC system not found
+  /hvacs/{hvacID}/signal:
+    put:
+      tags:
+        - hvacs
+      summary: Send signal to HVAC system
+      description: Send signal to HVAC system state by its ID
+      operationId: updateHvacState
+      parameters:
+        - name: hvacID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HVAC_State'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HVAC_State'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: HVAC system not found
+        '422':
+          description: Validation exception
+  /hvacs/{hvacID}/telemetry:
+    put:
+      tags:
+        - hvacs
+      summary: Update telemetry from HVAC system
+      description: Update a record of HVAC system by its ID
+      operationId: updateHVACTelemetry
+      parameters:
+        - name: hvacID
+          in: path
+          description: ID of HVAC to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Update an existent HVAC record
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HVAC_Telemetry'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HVAC_Telemetry'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: HVAC system not found
+        '422':
+          description: Validation exception
+  /lights:
+    put:
+      tags:
+        - lights
+      summary: Update info about existing HVAC system
+      description: Update a record of HVAC system by its ID
+      operationId: updateLight
+      requestBody:
+        description: Update an existent HVAC record
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Light'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Light'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Light'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Lighting system not found
+        '422':
+          description: Validation exception
+    post:
+      tags:
+        - lights
+      summary: Add a new Lighting system to the service
+      description: Add a new Lighting system to the service
+      operationId: addLighting
+      requestBody:
+        description: Create a new Lighting system under service
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Light'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Light'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Light'          
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+  /lights/{lightID}:
+    get:
+      tags:
+        - lights
+      summary: Find HVAC by ID
+      description: Returns a single HVAC
+      operationId: getLightingById
+      parameters:
+        - name: lightID
+          in: path
+          description: ID of HVAC to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Light'          
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Lighting system not found
+    delete:
+      tags:
+        - lights
+      summary: Deletes a Lighting system
+      description: Deletes a Lighting system
+      operationId: deleteLighting
+      parameters:
+        - name: lightID
+          in: path
+          description: Lighting system ID to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid Lighting ID value
+        '404':
+          description: Lighting system not found
+  /lights/{lightID}/signal:
+    put:
+      tags:
+        - lights
+      summary: Send signal to Lighting system
+      description: Send signal to change Lighting system state
+      operationId: updateLightState
+      parameters:
+        - name: lightID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Light_State'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Light_State'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Lighting system not found
+        '422':
+          description: Validation exception
+  /lights/{lightID}/telemetry:
+    put:
+      tags:
+        - lights
+      summary: Update telemetry from Light system
+      description: Update a record of Lighting system by its ID
+      operationId: updateLightTelemetry
+      parameters:
+        - name: lightID
+          in: path
+          description: ID of Lighting system to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Update an existent Lighting telemetry record
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Light_Telemetry'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Light_Telemetry'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Lighting system not found
+        '422':
+          description: Validation exception
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 123
+        username:
+          type: string
+          example: unique_username
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Smith
+        email:
+          type: string
+          example: john.smith@email.com
+        password_hash:
+          type: string
+          example: '1b247340301c3ee175863246c4a1a7ea'
+        phone:
+          type: string
+          example: '555-123-4567'
+    HVAC:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 123
+        model:
+          type: string
+          example: WarmHome 1.2
+        serial_id:
+          type: integer
+          description: Serial
+          format: int64
+          example: 1234567890
+    HVAC_State:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+          - on
+          - off
+        target_temperature:
+          type: number
+          example: 23
+    HVAC_Telemetry:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Current system status
+          enum:
+            - on
+            - off
+        current_temperature:
+          type: number
+          description: Current temperature at thermostat
+          example: 21
+        target_temperaturte:
+          type: number
+          description: Target temperature for HVAC system
+          example: 23
+    Light:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 123
+        model:
+          type: string
+          example: SweetHome 2.3
+        serial_id:
+          type: integer
+          description: Serial
+          format: int64
+          example: 1234567890
+    Light_State:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+          - on
+          - off
+        brighness:
+          type: number
+          example: 75
+    Light_Telemetry:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Current system status
+          enum:
+            - on
+            - off
+        current_brightness:
+          type: number
+          description: Current brightness of the light
+          example: 60
+        target_brightness:
+          type: number
+          description: Target brightness of the light
+          example: 90

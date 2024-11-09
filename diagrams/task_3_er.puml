@@ -1,0 +1,73 @@
+@startuml
+
+entity "User" {
+  + user_id: long <<PK>>
+  + name: string
+  + comments: string
+}
+
+entity "House" {
+  + house_id: long <<PK>>
+  + address: string
+  + comments: string
+}
+
+User ||--o{ House
+
+entity "Device_Type" {
+  + device_type_id: int <<PK>>
+  + telemetry_data_type_id: int <<FK>>
+  + name: string
+}
+
+entity "Module_Type" {
+  + module_type_id: int <<PK>>
+  + telemetry_data_type_id: int <<FK>>
+  + name: string
+}
+
+entity "Module" {
+  + module_id: long <<PK>>
+  + module_type_id: int <<FK>>
+  + name: string
+  + comments: string
+}
+
+Module_Type ||--o{ Module
+
+entity "Device" {
+  + device_id: long <<PK>>
+  + device_type_id: int <<FK>>
+  + house_id: long <<FK>>
+  + serial_number: long
+  + status: boolean
+  + comments: string
+  + turnOn()
+  + turnOff()
+}
+
+Device_Type ||--o{ Device
+House ||--o{ Device
+Device ||--o{ Module
+
+entity "Telemetry_Data_Type" {
+  + telemetry_data_type_id: int <<PK>>
+  + name: string
+}
+
+entity "Telemetry_Data" {
+  + telemetry_data_id: long <<PK>>
+  + device_id: long <<FK>>
+  + telemetry_data_type_id: int <<FK>>
+  + collected_at: time_with_tz
+  + data: jsonb
+}
+
+Device ||--o{ Telemetry_Data
+Module ||--o{ Telemetry_Data
+Telemetry_Data_Type ||--o{ Module_Type
+Telemetry_Data_Type ||--o{ Device_Type
+Telemetry_Data_Type ||--o{ Telemetry_Data
+
+
+@enduml

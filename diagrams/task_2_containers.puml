@@ -1,0 +1,100 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+' uncomment the following line and comment the first to use locally
+' !include C4_Container.puml
+
+AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="микросервис")
+AddElementTag("storage", $shape=RoundedBoxShape(), $bgColor="lightSkyBlue", $fontColor="white")
+
+SHOW_PERSON_OUTLINE()
+
+Person_Ext(customer,     "Клиент", "Клиент компании")
+System_Ext(hvac_sys,     "Система отопления")
+System_Ext(lights_sys,   "Система освещения")
+System_Ext(gates_sys,    "Система ворот")
+System_Ext(security_sys, "Система наблюдения")
+System_Ext(app,          "Приложение", "Управляет устройствами клиента")
+
+System_Boundary(b0, "Компания 'Теплый дом'") {
+    Container(api_gateway, "API Gateway", "Kong", "Балансировка нагрузки")
+    Container(message_bus, "Message Bus", "Kafka", "Доставка сообщений микросервисам")
+
+    System_Boundary(auth_b, "Внутренние системы") {
+        Container(auth_system, "Приложение авторизации", "Java", "Управление авторизацией пользователей")
+        ContainerDb(auth_db, "БД автоирзации", "PostgreSQL", "Хранит учетные записи", $tags = "storage")
+        Rel_D(auth_system, auth_db, "Хранит данные", "JDBC")
+    }
+    System_Boundary(hvac_b, "Бизнес отопления") {
+        Container(hvac_service, "Монолит отопления", "Java", "Управление отоплением в домах")
+        ContainerDb(hvac_db, "БД монолита отопления", "PostgreSQL", "Хранит состояние систем отопления", $tags = "storage")
+        Rel_D(hvac_service, hvac_db, "Хранит данные", "JDBC")
+    }
+    System_Boundary(lights_b, "Бизнес освещения") {
+        Container(lights_service, "Микросервис освещения", "Go", "Управление освещением в домах", $tags = "microService")
+        ContainerDb(lights_db, "БД микросервиса освещения", "PostgreSQL", "Хранит состояние систем освещения", $tags = "storage")
+        Rel_D(lights_service, lights_db, "Хранит данные", "native")
+    }
+    System_Boundary(gates_b, "Бизнес ворот") {
+        Container(gates_service, "Микросервис ворот", "Go", "Управление воротами", $tags = "microService")
+        ContainerDb(gates_db, "БД микросервиса ворот", "PostgreSQL", "Хранит состояние ворот", $tags = "storage")
+        Rel_D(gates_service, gates_db, "Хранит данные", "native")
+    }
+    System_Boundary(security_b, "Бизнес наблюдения") {
+        Container(security_service, "Микросервис наблюдения", "Go", "Управление наблюдением", $tags = "microService")
+        ContainerDb(security_db, "БД микросервиса наблюдения", "PostgreSQL", "Хранит состояние наблюдения", $tags = "storage")
+        Rel_D(security_service, security_db, "Хранит данные", "native")
+    }
+}
+
+Rel(customer,    app,              "Управляет устройствами")
+Rel(app,         api_gateway,      "Посылает команды управления устройством", "async, JSON/HTTPS")
+Rel(api_gateway, auth_system,      "Авторизация",                             "sync,  JSON/HTTPS")
+Rel(api_gateway, hvac_service,     "Посылает команды управления устройством", "async, JSON/HTTPS")
+Rel(api_gateway, lights_service,   "Посылает команды управления устройством", "async, JSON/HTTPS")
+Rel(api_gateway, gates_service,    "Посылает команды управления устройством", "async, JSON/HTTPS")
+Rel(api_gateway, security_service, "Посылает команды управления устройством", "async, JSON/HTTPS")
+Rel(hvac_service, api_gateway,     "Посылает телеметрию устройства",          "async, JSON/HTTPS")
+Rel(lights_service, api_gateway,   "Посылает телеметрию устройства",          "async, JSON/HTTPS")
+Rel(gates_service, api_gateway,    "Посылает телеметрию устройства",          "async, JSON/HTTPS")
+Rel(security_service, api_gateway, "Посылает телеметрию устройства",          "async, JSON/HTTPS")
+
+
+Rel(hvac_sys,     api_gateway, "Посылает телеметрию")
+Rel(hvac_service, hvac_sys,    "Отправляет устройству команды")
+
+Rel(lights_sys,     api_gateway,    "Посылает телеметрию")
+Rel(lights_service, lights_sys,     "Отправляет устройству команды")
+Rel(lights_service, message_bus,    "Создает сообщения")
+Rel(message_bus,    lights_service, "Обрабатывает сообщения")
+
+Rel(gates_sys,     api_gateway,   "Посылает телеметрию")
+Rel(gates_service, gates_sys,     "Отправляет устройству команды")
+Rel(gates_service, message_bus,   "Создает сообщения")
+Rel(message_bus,   gates_service, "Обрабатывает сообщения")
+
+Rel(security_sys,     api_gateway,      "Посылает телеметрию")
+Rel(security_service, security_sys,     "Отправляет устройству команды")
+Rel(security_service, message_bus,      "Создает сообщения")
+Rel(message_bus,      security_service, "Обрабатывает сообщения")
+
+Lay_D(customer, app)
+Lay_D(customer, hvac_sys)
+Lay_D(customer, lights_sys)
+Lay_D(customer, gates_sys)
+Lay_D(customer, security_sys)
+
+Lay_D(customer, b0)
+Lay_D(app, b0)
+Lay_D(hvac_sys, b0)
+Lay_D(lights_sys, b0)
+Lay_D(gates_sys, b0)
+Lay_D(security_sys, b0)
+
+Lay_D(message_bus, auth_b)
+Lay_D(message_bus, hvac_b)
+Lay_D(message_bus, gates_b)
+Lay_D(message_bus, lights_b)
+Lay_D(message_bus, security_b)
+
+SHOW_LEGEND()
+@enduml

@@ -1,0 +1,53 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+LAYOUT_WITH_LEGEND()
+
+title Системная диаграмма приложения "Теплый Дом"
+
+System_Ext(hvac,     "Система отопления", "Система отопления дома")
+Person_Ext(customer, "Пользователь",      "Клиент компании")
+Person(employee,     "Сотрудник",         "Сотрудник компании. Подключает новые системы отопления")
+System_Ext(app,      "Приложение",        "Управляет устройствами клиента компании")
+
+Enterprise_Boundary(e0, "Теплый Дом", "Компания 'Теплый Дом'") {
+    Enterprise_Boundary(b1, "Монолит", "Компания 'Теплый Дом'") {
+        System(monolith, "Монолит 'Теплый дом'", "Позволяет пользователям получать информацию о текущей температуре в доме и устанавливать требуемую")
+        ContainerDb(db, "Database", "PostgreSQL", "Хранит текущее состояние сенсоров и систем отопления")
+    }
+
+    Enterprise_Boundary(b2, "Остальная инфраструктура компании") {
+        System(auth, "Приложение авторизации", "Авторизует пользователей")
+        ContainerDb(auth_db, "Database", "PostgreSQL", "Хранит учетрные записи пользователей")
+    }
+
+    Person(customer_service, "Отдел поддержки", "Имеет административный доступ к ресурсам системы")
+}
+
+
+Rel_R(customer, app, "Использует приложение")
+Rel_D(app, monolith, "Посылает команды управления температурой")
+Rel_D(monolith, app, "Посылает телеметрию устройства отопления")
+Rel_D(app, auth,     "Авторизация")
+
+Rel_D(hvac, monolith, "Посылает статус и телеметрию")
+Rel_U(monolith, hvac, "Посылает управляющие сигналы")
+
+Rel_D(employee, customer_service, "Регистрирует новую систему")
+
+Rel_D(customer_service, db,      "Регистрирует новую систему отопления")
+Rel_D(customer_service, auth_db, "Регистрирует нового клиента")
+Rel_D(monolith, db,              "Обновляет существующие записи")
+
+Rel_D(auth, auth_db, "Авторизация")
+
+Lay_D(customer, app)
+Lay_L(customer, employee)
+Lay_R(employee, hvac)
+Lay_R(customer_service, b1)
+Lay_R(customer_service, b2)
+Lay_R(b1, b2)
+Lay_L(customer, hvac)
+Lay_D(monolith, db)
+Lay_D(auth, auth_db)
+@enduml

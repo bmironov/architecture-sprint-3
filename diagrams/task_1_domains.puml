@@ -1,0 +1,35 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+' uncomment the following line and comment the first to use locally
+' !include C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Домены существующей системы 'Тёплый дом'
+
+Container_Boundary(customer, "Домен: Клиент и его дом") {
+    Person_Ext(client, "Клиент")
+    System_Ext(hvac_sys, "Система отопления", "Управление температурой в доме")
+}
+
+Container_Boundary(web_application, "Домен: Web-приложение") {
+    System_Ext(web_app,  "Web приложение",    "Управление устройствами клиентов")
+}
+
+Enterprise_Boundary(company, "Тёплый дом") {
+    System_Boundary(hvac_domain, "Домен: системы отопления") {
+        Component(hvac_sys_management, "Субдомен: управление реестром систем отопления")
+        Component(hvac_telemetry,      "Субдомен: управление телеметрией")
+        Component(hvac_control,        "Субдомен: управление системами отопления")
+        ComponentDb(hvac_db, "Database", "PostgeSQL", "Хранит информацию об устройствах и их телеметрии")
+    }
+
+    System_Boundary(auth_domain, "Домен: система клиентов компании") {
+        Component(auth_sys_management, "Субдомен: управление реестром пользователей")
+        Component(auth_sys, "Субдомен: авторизация пользователей")
+        ComponentDb(auth_db, "Database", "PostgeSQL", "Хранит учетные записи")
+    }
+}
+
+Lay_D(customer, web_application)
+@enduml

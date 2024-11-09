@@ -1,0 +1,48 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!define FONTAWESOME  https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+!define FONTAWESOME2 https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/main/icons/devicons2
+!include DEVICONS/go.puml
+!include DEVICONS/postgresql.puml
+!include FONTAWESOME/server.puml
+!include FONTAWESOME2/kubernetes_line.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Микросервисы компании "Теплый Дом"
+
+System_Ext(hvac, "Система отопления", "Система отопления дома")
+Person_Ext(customer, "Пользователь", "Клиент компании с возможностью удаленного управления температурой в своем доме")
+System_Ext(lights, "Система освещения", "Система освещения дома")
+
+System_Boundary(company, "Компания 'Теплый дом'") {
+    Container(system_bus, "Шина обмена", "Kafka", "Передача сообщений между приложениями", "server")
+    System_Boundary(hvac_sys, "Микросервис отопления") {
+        Container(hvac_app1, "API Отопления", "Go, k8s", "Принимает сообщения управления отоплением", "go")
+        Container(hvac_app2, "API Отопления", "Go, k8s", "Обрабатывает сообщения управлением отоплением", "go")
+        ContainerDb(hvac_db, "База данных", "PostgreSQL", "Хранит состояние всех систем отопления", "postgresql")
+
+        Rel_D(hvac_app1, system_bus, "Сохраняет сообщение")
+        Rel_U(system_bus, hvac_app2, "Обрабока сообщения")
+        Rel_D(hvac_app2, hvac_db, "Сохраняет сосотояние")
+    }
+
+    System_Boundary(lights_sys, "Микросервис освещения") {
+        Container(lights_app1, "API Отопления", "Go, k8s", "Принимает сообщения управления освещением", "go")
+        Container(lights_app2, "API Отопления", "Go, k8s", "Обрабатывает сообщения управлением освещением", "go")
+        ContainerDb(lights_db, "База данных", "PostgreSQL", "Хранит состояние всех систем освещения", "postgresql")
+
+        Rel_D(lights_app1, system_bus, "Сохраняет сообщение")
+        Rel_D(system_bus, lights_app2, "Обрабока сообщения")
+        Rel_D(lights_app2, lights_db, "Сохраняет сосотояние")
+    }
+}
+
+Rel_D(customer, hvac_app1, "Посылает команды системе отопления")
+Rel_U(hvac_app2, hvac, "Управляющие сигналы")
+Rel_D(customer, lights_app1, "Посылает команды системе освещения")
+Rel_U(lights_app2, lights, "Управляющие сигналы")
+@enduml

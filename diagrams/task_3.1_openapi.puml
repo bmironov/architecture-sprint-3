@@ -4,13 +4,13 @@ info:
   description: |-
     This is an example of proposed API for new set of microsrvices designed
     in Sprint #3.
-  version: 1.0.0
+  version: 1.1.0
 servers:
   - url: https://warm_home.ru/api/v1
 tags:
   - name: users
     description: User account-related operations
-  - name: hvac
+  - name: hvacs
     description: Heating / Ventilation / A/C (HVAC) devices related operations
   - name: lights
     description: Lighting devices related operations
@@ -20,7 +20,7 @@ paths:
       tags:
         - users
       summary: Create new user
-      description: This can only be done by the logged in user.
+      description: This can only be done by the logged in user. ID in requestBody is ignored
       operationId: createUser
       requestBody:
         description: Created user object
@@ -32,12 +32,12 @@ paths:
             schema:
               $ref: '#/components/schemas/User'
       responses:
-        default:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid username/password supplied
+        '422':
+          description: Validation exception
   /users/login:
     get:
       tags:
@@ -49,36 +49,18 @@ paths:
         - name: username
           in: query
           description: The user name for login
-          required: false
+          required: true
           schema:
             type: string
         - name: password
           in: query
-          description: The password for login in clear text
-          required: false
+          description: Hash of the password for login (client app converts user plain text input into hash and sends it over the internet to us)
+          required: true
           schema:
             type: string
       responses:
         '200':
           description: successful operation
-          headers:
-            X-Rate-Limit:
-              description: calls per hour allowed by the user
-              schema:
-                type: integer
-                format: int32
-            X-Expires-After:
-              description: date in UTC when token expires
-              schema:
-                type: string
-                format: date-time
-          content:
-            application/xml:
-              schema:
-                type: string
-            application/json:
-              schema:
-                type: string
         '400':
           description: Invalid username/password supplied
   /users/logout:
@@ -90,22 +72,22 @@ paths:
       operationId: logoutUser
       parameters: []
       responses:
-        default:
+        '200':
           description: successful operation
-  /users/{username}:
+  /users/{userID}:
     get:
       tags:
         - users
       summary: Get user by user name
-      description: ''
-      operationId: getUserByName
+      description: Can be executed by admin user only
+      operationId: getUserById
       parameters:
-        - name: username
+        - name: userID
           in: path
-          description: 'The name that needs to be fetched. Use user1 for testing. '
+          description: The ID of user that needs to be fetched
           required: true
           schema:
-            type: string
+            type: integer
       responses:
         '200':
           description: successful operation
@@ -114,7 +96,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'          
         '400':
-          description: Invalid username supplied
+          description: Invalid userID supplied
         '404':
           description: User not found
     put:
@@ -124,12 +106,12 @@ paths:
       description: This can only be done by the logged in user
       operationId: updateUser
       parameters:
-        - name: username
+        - name: userID
           in: path
-          description: name that need to be deleted
+          description: ID of user that needs to be updated
           required: true
           schema:
-            type: string
+            type: integer
       requestBody:
         description: Update an existent user in the Customer DB
         content:
@@ -140,8 +122,16 @@ paths:
             schema:
               $ref: '#/components/schemas/User'
       responses:
-        default:
+        '200':
           description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid userID supplied
+        '422':
+          description: Validation exception
     delete:
       tags:
         - users
@@ -149,21 +139,23 @@ paths:
       description: This can only be done by the logged in user.
       operationId: deleteUser
       parameters:
-        - name: username
+        - name: userID
           in: path
-          description: The name that needs to be deleted
+          description: The ID of user that needs to be deleted
           required: true
           schema:
-            type: string
+            type: integer
       responses:
+        '200':
+          description: Successful operation
         '400':
-          description: Invalid username supplied
+          description: Invalid userID supplied
         '404':
           description: User not found
-  /hvac:
+  /hvacs:
     put:
       tags:
-        - hvac
+        - hvacs
       summary: Update info about existing HVAC system
       description: Update a record of HVAC system by its ID
       operationId: updateHVAC
@@ -192,7 +184,7 @@ paths:
           description: Validation exception
     post:
       tags:
-        - hvac
+        - hvacs
       summary: Add a new HVAC system to the service
       description: Add a new HVAC system to the service
       operationId: addHVAC
@@ -217,10 +209,10 @@ paths:
           description: Invalid input
         '422':
           description: Validation exception
-  /hvac/{hvacID}:
+  /hvacs/{hvacID}:
     get:
       tags:
-        - hvac
+        - hvacs
       summary: Find HVAC by ID
       description: Returns a single HVAC
       operationId: getHVACbyId
@@ -245,7 +237,7 @@ paths:
           description: HVAC system not found
     delete:
       tags:
-        - hvac
+        - hvacs
       summary: Deletes a HVAC system
       description: Deletes a HVAC system
       operationId: deleteHvac
@@ -259,15 +251,15 @@ paths:
             format: int64
       responses:
         '200':
-          description: successful operation
+          description: Successful operation
         '400':
           description: Invalid HVAC ID value
         '404':
           description: HVAC system not found
-  /hvac/state/{hvacID}:
+  /hvacs/{hvacID}/signal:
     put:
       tags:
-        - hvac
+        - hvacs
       summary: Send signal to HVAC system
       description: Send signal to HVAC system state by its ID
       operationId: updateHvacState
@@ -293,13 +285,13 @@ paths:
         '400':
           description: Invalid ID supplied
         '404':
-          description: Lighting system not found
+          description: HVAC system not found
         '422':
           description: Validation exception
-  /hvac/telemetry/{hvacID}:
+  /hvacs/{hvacID}/telemetry:
     put:
       tags:
-        - hvac
+        - hvacs
       summary: Update telemetry from HVAC system
       description: Update a record of HVAC system by its ID
       operationId: updateHVACTelemetry
@@ -434,7 +426,7 @@ paths:
           description: Invalid Lighting ID value
         '404':
           description: Lighting system not found
-  /lights/state/{lightID}:
+  /lights/{lightID}/signal:
     put:
       tags:
         - lights
@@ -466,7 +458,7 @@ paths:
           description: Lighting system not found
         '422':
           description: Validation exception
-  /lights/telemetry/{lightID}:
+  /lights/{lightID}/telemetry:
     put:
       tags:
         - lights
@@ -508,7 +500,7 @@ components:
         id:
           type: integer
           format: int64
-          example: 321
+          example: 123
         username:
           type: string
           example: unique_username
@@ -521,19 +513,12 @@ components:
         email:
           type: string
           example: john.smith@email.com
-        password:
+        password_hash:
           type: string
-          example: '12345'
+          example: '1b247340301c3ee175863246c4a1a7ea'
         phone:
           type: string
-          example: '12345'
-        userStatus:
-          type: integer
-          description: User Status
-          format: int32
-          example: 1
-      xml:
-        name: user
+          example: '555-123-4567'
     HVAC:
       type: object
       properties:
